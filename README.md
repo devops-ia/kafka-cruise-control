@@ -9,7 +9,7 @@ Compile an optimize image of Cruise Control for Apache Kafka on Docker. Based on
 ```text
 │ Image Details ├─────────────
 
-Total Image size: 473 MB
+Total Image size: 273 MB
 Potential wasted space: 4.5 MB
 Image efficiency score: 98 % 
 ```
