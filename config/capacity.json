@@ -1,0 +1,15 @@
+{
+  "brokerCapacities":[
+    {
+      "brokerId": "-1",
+      "capacity": {
+        "DISK": {'/data/1': '4400244', '/data/0': '4400244', '/data/3': '4400244', '/data/2': '4400244'},
+        "CPU": {"num.cores": "4"},
+        "NW_IN": "1250000",
+        "NW_OUT": "1250000"
+      },
+      "doc": "Default config for all Kafka Brokers."
+    }
+  ]
+}
+
