@@ -68,7 +68,7 @@ location /<locationPath> {
     rewrite ^/<locationPath>/(.*) /$1 break;
 
     # proxy_pass configuration
-	proxy_pass http://<ip-host>:<port-cruise-control>;
+    proxy_pass http://<ip-host>:<port-cruise-control>;
     proxy_pass_request_headers on;
 
     # sub_filters
