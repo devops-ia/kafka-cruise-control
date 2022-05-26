@@ -40,8 +40,8 @@ docker build -t <tag-name> .
 
 You **must** change the next values with your properly nodes:
 
-* `bootstrap.servers=<list-kafka-brokers>` # <kafka-broker>:<port>,<kafka-broker1>:<port>,<kafka-brokerN>:<port>
-* `zookeeper.connect=<list-zookeeper>`     # <zookeeper>:<port>,<zookeeper1>:<port>,<zookeeperN>:<port>
+* `bootstrap.servers=<list-kafka-brokers>` # \<kafka-broker>:\<port>,\<kafka-broker1>:\<port>,\<kafka-brokerN>:\<port>
+* `zookeeper.connect=<list-zookeeper>`     # \<zookeeper>:\<port>,\<zookeeper1>:\<port>,\<zookeeperN>:\<port>
 
 ### Run container
 
