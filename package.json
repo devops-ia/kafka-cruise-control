@@ -1,13 +1,44 @@
 {
-  "devDependencies": {
-    "@semantic-release/release-notes-generator": "*",
-    "semantic-release": "*"
+  "name": "@devops-ia/kafka-cruise-control",
+  "version": "1.0.0",
+  "description": "GitHub Action for Cruise Control",
+  "author": "ialejandro <hello@ialejandro.rocks>",
+  "homepage": "https://github.com/devops-ia/kafka-cruise-control",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "kafka-cruise-control",
+    "action"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/devops-ia/kafka-cruise-control/issues"
   },
   "release": {
     "tagFormat": "v${version}",
     "plugins": [
       "@semantic-release/commit-analyzer",
-      "@semantic-release/release-notes-generator"
+      "@semantic-release/release-notes-generator",
+      [
+        "@semantic-release/changelog",
+        {
+          "changelogFile": "CHANGELOG.md"
+        }
+      ],
+      [
+        "@semantic-release/git",
+        {
+          "assets": ["CHANGELOG.md"]
+        }
+      ]
     ]
+  },
+  "dependencies": {
+    "@semantic-release/changelog": "^6.0.1",
+    "semantic-release": "^19.0.2",
+    "@semantic-release/commit-analyzer": "^9.0.2",
+    "@semantic-release/release-notes-generator": "^10.0.3",
+    "@semantic-release/git": "^10.0.1"
   }
 }
