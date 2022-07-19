@@ -11,43 +11,52 @@ jobs:
   release:
     name: Create tag release
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk_version:
+         - 11
+         - 11.0.10
+         - 11.0.11-9
+         - 11.0.11
+         - 11.0.12
+         - 11.0.13
+         - 11.0.14
+         - 11.0.14.1
+         - 11.0.15
+         - 11.0.4
+         - 11.0.5
+         - 11.0.6
+         - 11.0.7
+         - 11.0.8
+         - 11.0.9
+         - 11.0.9.1
+         - 8u312
+         - 8u322
+         - 8u332
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v3
-        id: semantic
-        with:
-          branches: |
-            [
-              'main'
-            ]
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Log in to Docker Hub
-        if: ${{ steps.semantic.outputs.new_release_published == 'true' }}
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build and push Docker image
-        if: ${{ steps.semantic.outputs.new_release_published == 'true' }}
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        uses: docker/build-push-action@v3
         env:
-          VERSION: ${{ steps.semantic.outputs.new_release_version }}
+          OPENJDK_VERSION: ${{ matrix.jdk_version }}
         with:
           context: .
           push: true
-          tags: |
-            ${{ env.USER }}/${{ env.REPO }}:${{ env.VERSION }}
-            ${{ env.USER }}/${{ env.REPO }}:latest
+          platforms: linux/amd64
+          build-args: ${{ env.OPENJDK_VERSION }}
+          tags: ${{ env.USER }}/${{ env.REPO }}:openjdk-${{ env.OPENJDK_VERSION }},${{ env.USER }}/${{ env.REPO }}:${{ env.OPENJDK_VERSION }}
 
       - name: Update Docker registry description
-        if: ${{ steps.semantic.outputs.new_release_published == 'true' }}
         uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: ${{ env.USER }}/${{ env.REPO }}
