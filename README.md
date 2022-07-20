@@ -4,6 +4,11 @@
 
 Compile an optimize image of Cruise Control for Apache Kafka on Docker. Based on [linkedin/cruise-control](https://github.com/linkedin/cruise-control).
 
+Default versions:
+
+* Cruise Control: `migrate_to_kafka_2_5`
+* Cruise Control UI: `0.3.4`
+
 ## Image details (from dive)
 
 ```text
@@ -22,15 +27,9 @@ dive build -t <tag-name> .
 
 ## Quick start!
 
-**REMEMBER**: Kafka and Cruise Control must be have the same Java running version. If you want other Java version check "Change Java version" and rebuild the image.
+**REMEMBER**: Kafka and Cruise Control must be have the same Java running version. If you want other Java version check "Change Java version" and rebuild the image. [**All allowed tags**](https://hub.docker.com/r/devopsiaci/cruise-control/tags).
 
-### Pull image or build it
-
-```command
-docker pull devopsiaci/cruise-control:latest # default "openjdk-11.0.13" java version
-```
-
-or
+### Pull image
 
 ```command
 docker build -t <tag-name> .
@@ -40,8 +39,8 @@ docker build -t <tag-name> .
 
 You **must** change the next values with your properly nodes:
 
-* `bootstrap.servers=<list-kafka-brokers> # \<kafka-broker>:\<port>,\<kafka-broker1>:\<port>,\<kafka-brokerN>:\<port>`
-* `zookeeper.connect=<list-zookeeper>     # \<zookeeper>:\<port>,\<zookeeper1>:\<port>,\<zookeeperN>:\<port>`
+* bootstrap.servers=<list-kafka-brokers>
+* zookeeper.connect=<list-zookeeper>
 
 ### Run container
 
@@ -88,6 +87,14 @@ You can compile with other Java version, you can check all posible tags from: [o
 
 ```command
 docker build --build-arg OPENJDK_VERSION=<version> -t <image-name> . # example version: 11.0.15
+```
+
+## Change Cruise Control and Cruise Control UI version
+
+You can change the default Cruise Control version and Cruise Control UI version with `CC_TAG` and `CC_UI_TAG` arguments (please check [environment-requirements](https://github.com/linkedin/cruise-control#environment-requirements) and [compatibilities](https://github.com/linkedin/cruise-control#known-compatibility-issues))
+
+```command
+docker build --build-arg CC_TAG=<version> --build-arg CC_UI_TAG=<version> -t <image-name> . # example CC_TAG=migrate_to_kafka_2_4 and CC_UI_TAG=0.4.0
 ```
 
 ## Contributing

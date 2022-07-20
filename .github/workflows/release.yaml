@@ -30,9 +30,6 @@ jobs:
          - 11.0.8
          - 11.0.9
          - 11.0.9.1
-         - 8u312
-         - 8u322
-         - 8u332
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -45,14 +42,13 @@ jobs:
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
-        env:
-          OPENJDK_VERSION: ${{ matrix.jdk_version }}
         with:
           context: .
           push: true
           platforms: linux/amd64
-          build-args: ${{ env.OPENJDK_VERSION }}
-          tags: ${{ env.USER }}/${{ env.REPO }}:openjdk-${{ env.OPENJDK_VERSION }},${{ env.USER }}/${{ env.REPO }}:${{ env.OPENJDK_VERSION }}
+          build-args: |
+            OPENJDK_VERSION=${{ matrix.jdk_version }}
+          tags: ${{ env.USER }}/${{ env.REPO }}:openjdk-${{ matrix.jdk_version }},${{ env.USER }}/${{ env.REPO }}:${{ matrix.jdk_version }}
 
       - name: Update Docker registry description
         uses: peter-evans/dockerhub-description@v3
