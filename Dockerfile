@@ -22,9 +22,9 @@ RUN ./gradlew jar && ./gradlew jar copyDependantLibs                            
 
 FROM openjdk:${OPENJDK_VERSION}-jre-slim-buster
 
-LABEL maintainer="Iván Alejandro Marugán <hello@ialejandro.rocks>"
-LABEL description="Cruise Control for Apache Kafka (https://github.com/linkedin/cruise-control)"
-LABEL version="1.0"
+LABEL maintainer="Iván Alejandro Marugán <hello@ialejandro.rocks>"                               \
+      description="Cruise Control for Apache Kafka (https://github.com/linkedin/cruise-control)" \
+      version="1.0.0"
 
 RUN mkdir -p /cruise-control/cruise-control-ui
 COPY --from=base /cruise-control/cruise-control/build/libs/cruise-control.jar /cruise-control/cruise-control/build/libs/cruise-control.jar
