@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   release:
@@ -14,11 +15,8 @@ jobs:
     strategy:
       matrix:
         jdk_version:
-        - 8
         - 11
         - 17
-        - 21
-        - 22
         cc_tag:
         - 2.5.138
     steps:
