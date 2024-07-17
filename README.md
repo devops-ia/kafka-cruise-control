@@ -6,8 +6,9 @@ Compile an optimize image of Cruise Control for Apache Kafka on Docker. Based on
 
 Default versions:
 
-* Cruise Control: `migrate_to_kafka_2_5`
-* Cruise Control UI: `0.3.4`
+* Cruise Control: `2.5.138`
+* Cruise Control UI: `0.4.0`
+* AWS IAM Auth: `2.1.1`
 
 ## Image details (from dive)
 
@@ -16,7 +17,7 @@ Default versions:
 
 Total Image size: 273 MB
 Potential wasted space: 4.5 MB
-Image efficiency score: 98 % 
+Image efficiency score: 98 %
 ```
 
 You can reproduce this summary with [`dive`](https://github.com/wagoodman/dive):
@@ -39,8 +40,8 @@ docker build -t <tag-name> .
 
 You **must** change the next values with your properly nodes:
 
-* bootstrap.servers=<list-kafka-brokers>
-* zookeeper.connect=<list-zookeeper>
+* bootstrap.servers=`<list-kafka-brokers>`
+* zookeeper.connect=`<list-zookeeper>`
 
 ### Run container
 
@@ -83,10 +84,10 @@ location /<locationPath> {
 
 ## Change Java version
 
-You can compile with other Java version, you can check all posible tags from: [openjdk](https://hub.docker.com/_/openjdk?tab=tags&page=1&ordering=last_updated&name=jre-slim-buster), remember filter by: `jre-slim-buster` and rebuild the image:
+You can compile with other Java version, you can check all posible tags from: [amazoncorretto](https://hub.docker.com/_/amazoncorretto/tags)
 
 ```command
-docker build --build-arg OPENJDK_VERSION=<version> -t <image-name> . # example version: 11.0.15
+docker build --build-arg OPENJDK_VERSION=<version> -t <image-name> . # example version: 11
 ```
 
 ## Change Cruise Control and Cruise Control UI version
@@ -94,7 +95,7 @@ docker build --build-arg OPENJDK_VERSION=<version> -t <image-name> . # example v
 You can change the default Cruise Control version and Cruise Control UI version with `CC_TAG` and `CC_UI_TAG` arguments (please check [environment-requirements](https://github.com/linkedin/cruise-control#environment-requirements) and [compatibilities](https://github.com/linkedin/cruise-control#known-compatibility-issues))
 
 ```command
-docker build --build-arg CC_TAG=<version> --build-arg CC_UI_TAG=<version> -t <image-name> . # example CC_TAG=migrate_to_kafka_2_4 and CC_UI_TAG=0.4.0
+docker build --build-arg CC_TAG=<version> --build-arg CC_UI_TAG=<version> -t <image-name> . # example CC_TAG=2.5.137 and CC_UI_TAG=0.4.0
 ```
 
 ## Contributing
