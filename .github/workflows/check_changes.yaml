@@ -1,0 +1,48 @@
+name: Check linkedin/cruise-control updates
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check-and-release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Read values
+      run: |
+        # latest
+        latest_tag=$(curl -s https://api.github.com/repos/linkedin/cruise-control/tags | jq -r '.[0].name')
+        echo "LATEST_TAG=$latest_tag" >> $GITHUB_OUTPUT
+
+        # current
+        current_tag=$(grep lastTag .lastbuild | cut -d '=' -f 2)
+        echo "CURRENT_TAG=$current_tag" >> $GITHUB_OUTPUT
+
+    - name: Check if exists changes
+      id: check-changes
+      run: |
+        # check changes
+        if [ "$LATEST_TAG != $CURRENT_TAG ]; then
+          echo "tag_changed=true" >> $GITHUB_OUTPUT
+        fi
+
+        # save file
+        echo "lastTag=$new_tag" >> .lastbuild
+
+    - name: Update .lastbuild file
+      if: steps.check-changes.outputs.tag_changed == 'true'
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        git add .lastbuild
+        git commit -m "chore: update lastbuid [skip ci]"
+        git push origin HEAD:main
