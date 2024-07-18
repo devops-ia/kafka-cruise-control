@@ -17,26 +17,30 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Read values
+    - name: Get latest tag
+      id: latest_tag
       run: |
         # latest
         latest_tag=$(curl -s https://api.github.com/repos/linkedin/cruise-control/tags | jq -r '.[0].name')
-        echo "LATEST_TAG=$latest_tag" >> $GITHUB_OUTPUT
+        echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
 
+    - name: Get current tag
+      id: current_tag
+      run: |
         # current
         current_tag=$(grep lastTag .lastbuild | cut -d '=' -f 2)
-        echo "CURRENT_TAG=$current_tag" >> $GITHUB_OUTPUT
+        echo "current_tag=$current_tag" >> $GITHUB_OUTPUT
 
     - name: Check if exists changes
       id: check_changes
       run: |
         # check changes
-        if [ $LATEST_TAG != $CURRENT_TAG ]; then
+        if [ ${{ steps.latest_tag.outputs.latest_tag }} != ${{ steps.current_tag.outputs.current_tag }} ]; then
           echo "tag_changed=true" >> $GITHUB_OUTPUT
         fi
 
         # save file
-        echo "lastTag=$new_tag" >> .lastbuild
+        echo "lastTag=$new_tag" > .lastbuild
 
     - name: Update .lastbuild file
       if: steps.check_changes.outputs.tag_changed == 'true'
@@ -44,5 +48,5 @@ jobs:
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git config --global user.name "github-actions[bot]"
         git add .lastbuild
-        git commit -m "chore: update lastbuid [skip ci]"
+        git commit -m "chore: update .lastbuid version"
         git push origin HEAD:main

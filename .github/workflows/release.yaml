@@ -49,6 +49,18 @@ jobs:
           tags: |
             ${{ env.USER }}/${{ env.REPO }}:jdk${{ matrix.jdk_version }}-cc${{ steps.current_tag.outputs.current_tag }}
 
+      - name: Update README.md default version
+        run: |
+          # replace default version
+          sed -i "s/\* Cruise Control: .*/* Cruise Control: ${{ steps.current_tag.outputs.current_tag }}/" README.md
+
+          # push changes
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add README.md
+          git commit -m "chore: update README.md [skip ci]"
+          git push origin HEAD:main
+
       - name: Update Docker registry description
         uses: peter-evans/dockerhub-description@v4
         with:
