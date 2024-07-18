@@ -28,6 +28,24 @@ dive build -t <tag-name> .
 
 ## Quick start!
 
+[**Available images**](https://hub.docker.com/r/devopsiaci/cruise-control/tags)
+
+### Configure `cruise-control.properties`
+
+Review: [sample.cruise-control.properties](./config/cruisecontrol.properties)
+
+### Run container
+
+```command
+docker run --name <container-name>            \
+  -p 9090:9090                                \
+  -v config:/cruise-control/config            \
+  -v config/config.csv:/cruise-control/config \
+  jdk11-cc2.5.138
+```
+
+## Build your custom image!
+
 **REMEMBER**: Kafka and Cruise Control must be have the same Java running version. If you want other Java version check "Change Java version" and rebuild the image. [**All allowed tags**](https://hub.docker.com/r/devopsiaci/cruise-control/tags).
 
 ### Pull image
@@ -40,8 +58,10 @@ docker build -t <tag-name> .
 
 You **must** change the next values with your properly nodes:
 
-* bootstrap.servers=`<list-kafka-brokers>`
-* zookeeper.connect=`<list-zookeeper>`
+```console
+bootstrap.servers=<list-kafka-brokers>
+zookeeper.connect=<list-zookeeper>
+```
 
 ### Run container
 
