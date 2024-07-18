@@ -28,10 +28,10 @@ jobs:
         echo "CURRENT_TAG=$current_tag" >> $GITHUB_OUTPUT
 
     - name: Check if exists changes
-      id: check-changes
+      id: check_changes
       run: |
         # check changes
-        if [ "$LATEST_TAG != $CURRENT_TAG ]; then
+        if [ $LATEST_TAG != $CURRENT_TAG ]; then
           echo "tag_changed=true" >> $GITHUB_OUTPUT
         fi
 
@@ -39,7 +39,7 @@ jobs:
         echo "lastTag=$new_tag" >> .lastbuild
 
     - name: Update .lastbuild file
-      if: steps.check-changes.outputs.tag_changed == 'true'
+      if: steps.check_changes.outputs.tag_changed == 'true'
       run: |
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git config --global user.name "github-actions[bot]"
