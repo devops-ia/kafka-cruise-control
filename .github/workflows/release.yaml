@@ -1,8 +1,10 @@
-name: Create default release
+name: Create release
 
 env:
-  USER: devopsiaci
-  REPO: cruise-control
+  DOCKERHUB_USER: devopsiaci
+  DOCKERHUB_REPO: cruise-control
+  GHCR_REGISTRY: ghcr.io
+  GHCR_REPO: ${{ github.repository }}
 
 on:
   push:
@@ -21,9 +23,18 @@ jobs:
         jdk_version:
         - 11
         - 17
+
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      attestations: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Read .lastbuild file
         id: current_tag
@@ -31,39 +42,92 @@ jobs:
           current_tag=$(grep lastTag .lastbuild | cut -d '=' -f 2)
           echo "current_tag=$current_tag" >> $GITHUB_OUTPUT
 
-      - name: Log in to Docker Hub
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      ##############
+      # DOCKERHUB
+      ##############
+
+      - name: "[DOCKERHUB] Log in to Docker Hub"
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: "[DOCKERHUB] Build and push Docker image"
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           build-args: |
             OPENJDK_VERSION=${{ matrix.jdk_version }}
             CC_TAG=${{ steps.current_tag.outputs.current_tag }}
           tags: |
-            ${{ env.USER }}/${{ env.REPO }}:jdk${{ matrix.jdk_version }}-cc${{ steps.current_tag.outputs.current_tag }}
+            ${{ env.DOCKERHUB_USER }}/${{ env.DOCKERHUB_REPO }}:jdk${{ matrix.jdk_version }}-cc${{ steps.current_tag.outputs.current_tag }}
 
-      - name: Update README.md default version
+      - name: "[DOCKERHUB] Update README.md default version"
         run: |
           # replace default version
-          sed -i "s/\* Cruise Control: .*/* Cruise Control: ${{ steps.current_tag.outputs.current_tag }}/" README.md
+          sed -i "s/\* Cruise Control: .*/* Cruise Control: \`${{ steps.current_tag.outputs.current_tag }}\`/" README.md
 
           # push changes
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git add README.md
-          git commit -m "chore: update README.md [skip ci]"
-          git push origin HEAD:main
+          git commit -m "chore: update README.md [skip ci]" || true
+          git push -f origin HEAD:main
 
-      - name: Update Docker registry description
+      - name: "[DOCKERHUB] Update Docker registry description"
         uses: peter-evans/dockerhub-description@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: ${{ env.USER }}/${{ env.REPO }}
+          repository: ${{ env.DOCKERHUB_USER }}/${{ env.DOCKERHUB_REPO }}
+
+      ##############
+      # GHCR
+      ##############
+
+      - name: "[GHCR] Log in to the Container registry"
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GHCR_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "[GHCR] Get metadata"
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}
+          tags: |
+            type=sha,enable=false
+          labels: |
+            maintainer=ialejandro
+            org.opencontainers.image.title=cruise-control
+            org.opencontainers.image.description=Cruise Control for Apache Kafka
+
+      - name: "[GHCR] Build and push Docker image"
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            OPENJDK_VERSION=${{ matrix.jdk_version }}
+            CC_TAG=${{ steps.current_tag.outputs.current_tag }}
+          tags: |
+            ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}:jdk${{ matrix.jdk_version }}-cc${{ steps.current_tag.outputs.current_tag }}
+
+      - name: "[GHCR] Generate artifact"
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
