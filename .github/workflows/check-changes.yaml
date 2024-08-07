@@ -1,47 +1,58 @@
-name: Check linkedin/cruise-control updates
+name: Check linkedin/cruise-control new release
 
 on:
-  schedule:
-    - cron: '0 * * * *'
   workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
 
 jobs:
   check-and-release:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+  
+      - name: Get latest tag
+        id: latest_release
+        run: |
+          latest_release=$(curl -s https://api.github.com/repos/linkedin/cruise-control/tags | jq -r '.[0].name')
+          echo "latest_release=$latest_release" >> $GITHUB_OUTPUT
+  
+      - name: Get current tag
+        id: current_release
+        run: |
+          current_release=$(grep lastTag .lastbuild | cut -d '=' -f 2)
+          echo "current_release=$current_release" >> $GITHUB_OUTPUT
+  
+      - name: Check if exists changes
+        id: check_changes
+        run: |
+          # check changes
+          if [ ${{ steps.latest_release.outputs.latest_release }} != ${{ steps.current_release.outputs.current_release }} ]; then
+            echo "release_changed=true" >> $GITHUB_OUTPUT
+          fi
+  
+          # save file
+          echo "lastTag=$new_tag" > .lastbuild
+  
+      - name: Create PR with .lastbuild changes
+        if: steps.check_changes.outputs.release_changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.PAT_GITHUB }}
+          commit-message: "feat: new cruise-control version ${{ steps.latest_release.outputs.latest_release }}"
+          signoff: false
+          branch: feat/upgrade-cruise-control-${{ steps.latest_release.outputs.latest_release }}
+          delete-branch: true
+          title: '[cruise-control] new release: ${{ steps.latest_release.outputs.latest_release }}'
+          body: |
+            Cruise Control version:
+            - :information_source: Current: `${{ steps.current_release.outputs.current_release }}`
+            - :up: Upgrade: `${{ steps.latest_release.outputs.latest_release }}`
 
-    - name: Get latest tag
-      id: latest_tag
-      run: |
-        # latest
-        latest_tag=$(curl -s https://api.github.com/repos/linkedin/cruise-control/tags | jq -r '.[0].name')
-        echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
-
-    - name: Get current tag
-      id: current_tag
-      run: |
-        # current
-        current_tag=$(grep lastTag .lastbuild | cut -d '=' -f 2)
-        echo "current_tag=$current_tag" >> $GITHUB_OUTPUT
-
-    - name: Check if exists changes
-      id: check_changes
-      run: |
-        # check changes
-        if [ ${{ steps.latest_tag.outputs.latest_tag }} != ${{ steps.current_tag.outputs.current_tag }} ]; then
-          echo "tag_changed=true" >> $GITHUB_OUTPUT
-        fi
-
-        # save file
-        echo "lastTag=$new_tag" > .lastbuild
-
-    - name: Update .lastbuild file
-      if: steps.check_changes.outputs.tag_changed == 'true'
-      run: |
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "github-actions[bot]"
-        git add .lastbuild
-        git commit -m "chore: update .lastbuid version"
-        git push origin HEAD:main
+            Changelog: https://github.com/linkedin/cruise-control/releases/tag/${{ steps.latest_release.outputs.latest_release }}
+          labels: |
+            auto-pr-bump-version
+          team-reviewers: devops-ia
