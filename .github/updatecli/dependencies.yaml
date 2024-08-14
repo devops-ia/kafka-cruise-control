@@ -1,0 +1,64 @@
+scms:
+  cruise-control:
+    kind: github
+    spec:
+        owner: "linkedin"
+        repository: "cruise-control"
+        token: {{ requiredEnv "GITHUB_TOKEN" }}
+        branch: "main"
+sources:
+  aws-msk-iam-auth:
+    kind: githubrelease
+    spec:
+      owner: "aws"
+      repository: "aws-msk-iam-auth"
+      token: {{ requiredEnv "GITHUB_TOKEN" }}
+      versionFilter:
+        kind: semver
+    transformers:
+      - trimprefix: "v"
+  cruise-control:
+    kind: gittag
+    scmid: cruise-control
+    spec:
+      versionfilter:
+        kind: semver
+  cruise-control-ui:
+    kind: githubrelease
+    spec:
+      owner: "linkedin"
+      repository: "cruise-control-ui"
+      token: {{ requiredEnv "GITHUB_TOKEN" }}
+      versionFilter:
+        kind: semver
+    transformers:
+      - trimprefix: "v"
+conditions: {}
+targets:
+  update-aws-msk-iam-auth-version:
+    name: "Update the value of ARG AWS_MSK_IAM_AUTH_VERSION in the Dockerfile"
+    sourceid: aws-msk-iam-auth
+    kind: dockerfile
+    spec:
+      file: Dockerfile
+      instruction:
+        keyword: "ARG"
+        matcher: "AWS_MSK_IAM_AUTH_VERSION"
+  update-cc-tag:
+    name: "Update the value of ARG CC_TAG in the Dockerfile"
+    sourceid: cruise-control
+    kind: dockerfile
+    spec:
+      file: Dockerfile
+      instruction:
+        keyword: "ARG"
+        matcher: "CC_TAG"
+  update-cc-ui-tag:
+    name: "Update the value of ARG CC_UI_TAG in the Dockerfile"
+    sourceid: cruise-control-ui
+    kind: dockerfile
+    spec:
+      file: Dockerfile
+      instruction:
+        keyword: "ARG"
+        matcher: "CC_UI_TAG"
