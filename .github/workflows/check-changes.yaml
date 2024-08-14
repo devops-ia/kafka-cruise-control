@@ -13,46 +13,98 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-  
-      - name: Get latest tag
-        id: latest_release
-        run: |
-          latest_release=$(curl -s https://api.github.com/repos/linkedin/cruise-control/tags | jq -r '.[0].name')
-          echo "latest_release=$latest_release" >> $GITHUB_OUTPUT
-  
+
       - name: Get current tag
         id: current_release
         run: |
-          current_release=$(grep lastTag .lastbuild | cut -d '=' -f 2)
-          echo "current_release=$current_release" >> $GITHUB_OUTPUT
-  
+          # cc_tag
+          cc_current_release=$(grep "ARG CC_TAG" Dockerfile | cut -d '=' -f 2)
+          echo "cc_current_release=$cc_current_release" >> $GITHUB_OUTPUT
+
+          # cc_ui_tag
+          cc_current_release=$(grep "ARG CC_TAG_UI" Dockerfile | cut -d '=' -f 2)
+          echo "cc_ui_current_release=$cc_ui_current_release" >> $GITHUB_OUTPUT
+
+          # iam_tag
+          iam_current_release=$(grep "ARG AWS_MSK_IAM_AUTH_VERSION" Dockerfile | cut -d '=' -f 2)
+          echo "iam_current_release=$iam_current_release" >> $GITHUB_OUTPUT
+
+      - name: Install updatecli
+        uses: updatecli/updatecli-action@v2
+
+      - name: Update dependencies
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
+        run: |
+          updatecli apply --config .github/updatecli/dependencies.yaml --commit=false
+
+      - name: Get latest tag
+        id: latest_release
+        run: |
+          # cc_tag
+          cc_latest_release=$(grep "ARG CC_TAG" Dockerfile | cut -d '=' -f 2)
+          echo "cc_latest_release=$cc_latest_release" >> $GITHUB_OUTPUT
+
+          # cc_ui_tag
+          cc_latest_release=$(grep "ARG CC_TAG_UI" Dockerfile | cut -d '=' -f 2)
+          echo "cc_ui_latest_release=$cc_ui_latest_release" >> $GITHUB_OUTPUT
+
+          # iam_tag
+          iam_latest_release=$(grep "ARG AWS_MSK_IAM_AUTH_VERSION" Dockerfile | cut -d '=' -f 2)
+          echo "iam_latest_release=$iam_latest_release" >> $GITHUB_OUTPUT
+
+          # complete tag
+          echo "complete_tag=cc$cc_latest_release-iam$iam_latest_release" >> $GITHUB_OUTPUT
+
       - name: Check if exists changes
         id: check_changes
+        env:
+          cc_latest_release: ${{ steps.latest_release.outputs.cc_latest_release }}
+          cc_ui_latest_release: ${{ steps.latest_release.outputs.cc_ui_latest_release }}
+          iam_latest_release: ${{ steps.latest_release.outputs.iam_latest_release }}
         run: |
-          # check changes
-          if [ ${{ steps.latest_release.outputs.latest_release }} != ${{ steps.current_release.outputs.current_release }} ]; then
-            echo "release_changed=true" >> $GITHUB_OUTPUT
+          # Cruise Control
+          if [ "$cc_current_release" != "$cc_latest_release" ]; then
+              body+="Cruise Control version:\n"
+              body+="  - :information_source: Current: $cc_current_release\n"
+              body+="  - :up: Upgrade: $cc_latest_release\n"
+              body+="  - Changelog: https://github.com/linkedin/cruise-control/releases/tag/$cc_latest_release\n\n"
+
+              echo "release_changed=true" >> $GITHUB_OUTPUT
           fi
-  
-          # save file
-          echo "lastTag=$new_tag" > .lastbuild
-  
-      - name: Create PR with .lastbuild changes
+
+          # Cruise Control UI
+          if [ "$cc_ui_current_release" != "$cc_ui_latest_release" ]; then
+              body+="Cruise Control UI version:\n"
+              body+="  - :information_source: Current: $cc_ui_current_release\n"
+              body+="  - :up: Upgrade: $cc_ui_latest_release\n"
+              body+="  - Changelog: https://github.com/linkedin/cruise-control-ui/releases/tag/v$cc_ui_latest_release\n\n"
+
+              echo "release_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+          # IAM
+          if [ "$iam_current_release" != "$iam_latest_release" ]; then
+              body+="AWS IAM Auth version:\n"
+              body+="  - :information_source: Current: $iam_current_release\n"
+              body+="  - :up: Upgrade: $iam_latest_release\n"
+              body+="  - Changelog: https://github.com/aws/aws-msk-iam-auth/releases/tag/v$iam_latest_release\n\n"
+
+              echo "release_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+          echo -e "$body" > pr-output.log
+
+      - name: Create PR changes
         if: steps.check_changes.outputs.release_changed == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.PAT_GITHUB }}
-          commit-message: "feat: new cruise-control version ${{ steps.latest_release.outputs.latest_release }}"
+          commit-message: "feat: new cruise-control version ${{ steps.latest_release.outputs.complete_tag }}"
           signoff: false
-          branch: feat/upgrade-cruise-control-${{ steps.latest_release.outputs.latest_release }}
+          branch: feat/upgrade-cruise-control-${{ steps.latest_release.outputs.complete_tag }}
           delete-branch: true
-          title: '[cruise-control] new release: ${{ steps.latest_release.outputs.latest_release }}'
-          body: |
-            Cruise Control version:
-            - :information_source: Current: `${{ steps.current_release.outputs.current_release }}`
-            - :up: Upgrade: `${{ steps.latest_release.outputs.latest_release }}`
-
-            Changelog: https://github.com/linkedin/cruise-control/releases/tag/${{ steps.latest_release.outputs.latest_release }}
+          title: '[cruise-control] new release: ${{ steps.latest_release.outputs.complete_tag }}'
+          body-path: pr-output.log
           labels: |
             auto-pr-bump-version
-          team-reviewers: devops-ia
