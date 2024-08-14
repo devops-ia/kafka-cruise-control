@@ -59,15 +59,18 @@ jobs:
       - name: Check if exists changes
         id: check_changes
         env:
+          cc_current_release: ${{ steps.current_release.outputs.cc_current_release }}
           cc_latest_release: ${{ steps.latest_release.outputs.cc_latest_release }}
+          cc_ui_current_release: ${{ steps.current_release.outputs.cc_ui_current_release }}
           cc_ui_latest_release: ${{ steps.latest_release.outputs.cc_ui_latest_release }}
+          iam_current_release: ${{ steps.current_release.outputs.iam_current_release }}
           iam_latest_release: ${{ steps.latest_release.outputs.iam_latest_release }}
         run: |
           # Cruise Control
           if [ "$cc_current_release" != "$cc_latest_release" ]; then
               body+="Cruise Control version:\n"
-              body+="  - :information_source: Current: $cc_current_release\n"
-              body+="  - :up: Upgrade: $cc_latest_release\n"
+              body+="  - :information_source: Current: `$cc_current_release`\n"
+              body+="  - :up: Upgrade: `$cc_latest_release`\n"
               body+="  - Changelog: https://github.com/linkedin/cruise-control/releases/tag/$cc_latest_release\n\n"
 
               echo "release_changed=true" >> $GITHUB_OUTPUT
@@ -76,8 +79,8 @@ jobs:
           # Cruise Control UI
           if [ "$cc_ui_current_release" != "$cc_ui_latest_release" ]; then
               body+="Cruise Control UI version:\n"
-              body+="  - :information_source: Current: $cc_ui_current_release\n"
-              body+="  - :up: Upgrade: $cc_ui_latest_release\n"
+              body+="  - :information_source: Current: `$cc_ui_current_release`\n"
+              body+="  - :up: Upgrade: `$cc_ui_latest_release`\n"
               body+="  - Changelog: https://github.com/linkedin/cruise-control-ui/releases/tag/v$cc_ui_latest_release\n\n"
 
               echo "release_changed=true" >> $GITHUB_OUTPUT
@@ -86,8 +89,8 @@ jobs:
           # IAM
           if [ "$iam_current_release" != "$iam_latest_release" ]; then
               body+="AWS IAM Auth version:\n"
-              body+="  - :information_source: Current: $iam_current_release\n"
-              body+="  - :up: Upgrade: $iam_latest_release\n"
+              body+="  - :information_source: Current: `$iam_current_release`\n"
+              body+="  - :up: Upgrade: `$iam_latest_release`\n"
               body+="  - Changelog: https://github.com/aws/aws-msk-iam-auth/releases/tag/v$iam_latest_release\n\n"
 
               echo "release_changed=true" >> $GITHUB_OUTPUT
