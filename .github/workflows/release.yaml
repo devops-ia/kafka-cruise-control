@@ -42,7 +42,7 @@ jobs:
           echo "cc_current_tag=$cc_current_tag" >> $GITHUB_OUTPUT
 
           # cc_ui_tag
-          cc_current_tag=$(grep "ARG CC_TAG_UI" Dockerfile | cut -d '=' -f 2)
+          cc_ui_current_tag=$(grep "ARG CC_UI_TAG" Dockerfile | cut -d '=' -f 2)
           echo "cc_ui_current_tag=$cc_ui_current_tag" >> $GITHUB_OUTPUT
 
           # iam_tag
@@ -96,8 +96,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Build and push Docker image"
+        id: push
         uses: docker/build-push-action@v6
         with:
+          build-args: OPENJDK_VERSION=${{ matrix.jdk_version }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
           context: .
