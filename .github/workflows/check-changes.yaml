@@ -14,18 +14,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Get current tag
         id: current_release
         run: |
-          # cc_tag
+          # cc_release
           cc_current_release=$(grep "ARG CC_TAG" Dockerfile | cut -d '=' -f 2)
           echo "cc_current_release=$cc_current_release" >> $GITHUB_OUTPUT
 
-          # cc_ui_tag
+          # cc_ui_release
           cc_ui_current_release=$(grep "ARG CC_TAG_UI" Dockerfile | cut -d '=' -f 2)
           echo "cc_ui_current_release=$cc_ui_current_release" >> $GITHUB_OUTPUT
 
-          # iam_tag
+          # iam_release
           iam_current_release=$(grep "ARG AWS_MSK_IAM_AUTH_VERSION" Dockerfile | cut -d '=' -f 2)
           echo "iam_current_release=$iam_current_release" >> $GITHUB_OUTPUT
 
@@ -41,20 +47,20 @@ jobs:
       - name: Get latest tag
         id: latest_release
         run: |
-          # cc_tag
+          # cc_release
           cc_latest_release=$(grep "ARG CC_TAG" Dockerfile | cut -d '=' -f 2)
           echo "cc_latest_release=$cc_latest_release" >> $GITHUB_OUTPUT
 
-          # cc_ui_tag
+          # cc_ui_release
           cc_ui_latest_release=$(grep "ARG CC_TAG_UI" Dockerfile | cut -d '=' -f 2)
           echo "cc_ui_latest_release=$cc_ui_latest_release" >> $GITHUB_OUTPUT
 
-          # iam_tag
+          # iam_release
           iam_latest_release=$(grep "ARG AWS_MSK_IAM_AUTH_VERSION" Dockerfile | cut -d '=' -f 2)
           echo "iam_latest_release=$iam_latest_release" >> $GITHUB_OUTPUT
 
-          # complete tag
-          echo "complete_tag=cc$cc_latest_release-iam$iam_latest_release" >> $GITHUB_OUTPUT
+          # complete_tag
+          echo "complete_release=cc$cc_latest_release-iam$iam_latest_release" >> $GITHUB_OUTPUT
 
       - name: Check if exists changes
         id: check_changes
@@ -103,11 +109,11 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.PAT_GITHUB }}
-          commit-message: "feat: new cruise-control version ${{ steps.latest_release.outputs.complete_tag }}"
+          commit-message: "feat: new cruise-control version ${{ steps.latest_release.outputs.complete_release }}"
           signoff: false
-          branch: feat/upgrade-cruise-control-${{ steps.latest_release.outputs.complete_tag }}
+          branch: feat/upgrade-cruise-control-${{ steps.latest_release.outputs.complete_release }}
           delete-branch: true
-          title: '[cruise-control] new release: ${{ steps.latest_release.outputs.complete_tag }}'
+          title: '[cruise-control] new release: ${{ steps.latest_release.outputs.complete_release }}'
           body-path: pr-output.log
           labels: |
             auto-pr-bump-version

@@ -27,8 +27,7 @@ RUN wget https://github.com/aws/aws-msk-iam-auth/releases/download/v${AWS_MSK_IA
 FROM amazoncorretto:${OPENJDK_VERSION}
 
 LABEL maintainer="Iván Alejandro Marugán <hello@ialejandro.rocks>"                               \
-      description="Cruise Control for Apache Kafka (https://github.com/linkedin/cruise-control)" \
-      version="1.0.0"
+      description="Cruise Control for Apache Kafka (https://github.com/linkedin/cruise-control)"
 
 RUN mkdir -p /cruise-control/cruise-control-ui
 COPY --from=base /cruise-control/config /cruise-control/config

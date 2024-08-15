@@ -8,7 +8,7 @@ Default versions:
 
 * Cruise Control: `2.5.138`
 * Cruise Control UI: `0.4.0`
-* AWS IAM Auth: `2.1.1`
+* AWS IAM Auth: `2.2.0`
 
 ## Image details (from dive)
 
@@ -26,7 +26,7 @@ You can reproduce this summary with [`dive`](https://github.com/wagoodman/dive):
 dive build -t <tag-name> .
 ```
 
-## Quick start!
+## Quick start
 
 [**Available images**](https://hub.docker.com/r/devopsiaci/cruise-control/tags)
 
@@ -41,10 +41,13 @@ docker run --name <container-name>            \
   -p 9090:9090                                \
   -v config:/cruise-control/config            \
   -v config/config.csv:/cruise-control/config \
-  jdk11-cc2.5.138
+  jdk17-cc2.5.138-iam2.2.0
 ```
 
-## Build your custom image!
+* More samples: [linkedin/cruise-control - configs](https://github.com/linkedin/cruise-control/tree/2.5.138/config)
+* More info: [linkedin/cruise-control - wiki](https://github.com/linkedin/cruise-control/wiki/)
+
+## Build your custom image
 
 **REMEMBER**: Kafka and Cruise Control must be have the same Java running version. If you want other Java version check "Change Java version" and rebuild the image. [**All allowed tags**](https://hub.docker.com/r/devopsiaci/cruise-control/tags).
 
@@ -73,7 +76,7 @@ docker run --name <container-name>            \
   <tag-name>
 ```
 
-* More samples: [linkedin/cruise-control - configs](https://github.com/linkedin/cruise-control/tree/migrate_to_kafka_2_4/config)
+* More samples: [linkedin/cruise-control - configs](https://github.com/linkedin/cruise-control/tree/2.5.138/config)
 * More info: [linkedin/cruise-control - wiki](https://github.com/linkedin/cruise-control/wiki/)
 
 ## Configure Nginx
@@ -115,9 +118,5 @@ docker build --build-arg OPENJDK_VERSION=<version> -t <image-name> . # example v
 You can change the default Cruise Control version and Cruise Control UI version with `CC_TAG` and `CC_UI_TAG` arguments (please check [environment-requirements](https://github.com/linkedin/cruise-control#environment-requirements) and [compatibilities](https://github.com/linkedin/cruise-control#known-compatibility-issues))
 
 ```command
-docker build --build-arg CC_TAG=<version> --build-arg CC_UI_TAG=<version> -t <image-name> . # example CC_TAG=2.5.137 and CC_UI_TAG=0.4.0
+docker build --build-arg CC_TAG=<version> --build-arg CC_UI_TAG=<version> -t <image-name> . # example CC_TAG=2.5.138 and CC_UI_TAG=0.4.0
 ```
-
-## Contributing
-
-We're happy if you want open and issue or a new feature :)
