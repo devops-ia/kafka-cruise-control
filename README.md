@@ -6,7 +6,7 @@ Compile an optimize image of Cruise Control for Apache Kafka on Docker. Based on
 
 Default versions:
 
-* Cruise Control: `2.5.140`
+* Cruise Control: `2.5.141`
 * Cruise Control UI: `0.4.0`
 * AWS IAM Auth: `2.2.0`
 
