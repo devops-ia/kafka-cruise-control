@@ -4,7 +4,7 @@ FROM amazoncorretto:${OPENJDK_VERSION} as base
 
 ARG CC_TAG=3.0.2
 ARG CC_UI_TAG=0.4.0
-ARG AWS_MSK_IAM_AUTH_VERSION=2.3.1
+ARG AWS_MSK_IAM_AUTH_VERSION=2.3.2
 
 RUN yum install -y wget git tar                                                                                              && \
     git clone -b ${CC_TAG} https://github.com/linkedin/cruise-control.git                                                    && \
