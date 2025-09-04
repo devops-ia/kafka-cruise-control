@@ -8,7 +8,7 @@ Default versions:
 
 * Cruise Control: `3.0.3`
 * Cruise Control UI: `0.4.0`
-* AWS IAM Auth: `2.3.2`
+* AWS IAM Auth: `2.3.3`
 
 ## Image details (from dive)
 
