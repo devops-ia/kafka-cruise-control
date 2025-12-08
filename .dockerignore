@@ -1,0 +1,12 @@
+.git
+.gradle
+build
+target
+node_modules
+*.log
+*.tar.gz
+*.jar
+tmp
+.idea
+.vscode
+**/__pycache__

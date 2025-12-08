@@ -2,121 +2,259 @@
 
 ## Introduction
 
-Compile an optimize image of Cruise Control for Apache Kafka on Docker. Based on [linkedin/cruise-control](https://github.com/linkedin/cruise-control).
+Optimized multi-stage Docker images for Cruise Control and Cruise Control UI for Apache Kafka. Based on [linkedin/cruise-control](https://github.com/linkedin/cruise-control).
+
+- **Cruise Control Server**: Java-based service for managing Kafka clusters
+- **Cruise Control UI**: Nginx-based web interface with multi-cluster support
+- **Multi-stage builds**: Optimized images with separate build and runtime stages
+- **Security**: Non-root users and minimal attack surface
+- **AWS MSK IAM Auth**: Built-in support for AWS MSK authentication
 
 Default versions:
 
-* Cruise Control: `3.0.3`
-* Cruise Control UI: `0.4.0`
-* AWS IAM Auth: `2.3.5`
+- Cruise Control: `3.0.3`
+- Cruise Control UI: `0.4.0`
+- AWS IAM Auth: `2.3.5`
+- Java (Amazon Corretto): `17`
+- Nginx: `1.25-alpine`
 
-## Image details (from dive)
+## Available images
+
+The build process generates two separate images:
+
+1. **cruise-control**: Server component (Java-based)
+2. **cruise-control-ui**: Web interface (Nginx-based)
+
+[**View all available tags**](https://hub.docker.com/r/devopsiaci/cruise-control/tags)
+
+## Architecture
+
+The Dockerfile uses a multi-stage build approach:
 
 ```text
-│ Image Details ├─────────────
-
-Total Image size: 273 MB
-Potential wasted space: 4.5 MB
-Image efficiency score: 98 %
-```
-
-You can reproduce this summary with [`dive`](https://github.com/wagoodman/dive):
-
-```command
-dive build -t <tag-name> .
+┌─────────────────┐
+│  Build Stage    │  Amazon Corretto + Git
+│  (build)        │  - Clone Cruise Control
+│                 │  - Download UI assets
+│                 │  - Compile JAR files
+│                 │  - Download AWS MSK IAM Auth
+└────────┬────────┘
+         │
+         ├──────────────────────┬─────────────────────┐
+         │                      │                     │
+┌────────▼────────┐    ┌────────▼────────┐   ┌───────▼──────┐
+│ cruise-control  │    │cruise-control-ui│   │  Artifacts   │
+│                 │    │                 │   │   Discarded  │
+│ Runtime: Java   │    │ Runtime: Nginx  │   └──────────────┘
+│ User: nobody    │    │ User: nginx     │
+│ Port: 9090      │    │ Port: 80        │
+└─────────────────┘    └─────────────────┘
 ```
 
 ## Quick start
 
-[**Available images**](https://hub.docker.com/r/devopsiaci/cruise-control/tags)
+### `cruise-control`
+
+Run the server component:
+
+```bash
+docker run --name cruise-control-server \
+  -p 9090:9090 \
+  -v $(pwd)/config:/cruise-control/config \
+  devopsiaci/cruise-control:jdk17-cc3.0.3-iam2.3.5
+```
+
+### `cruise-control-ui`
+
+Run the UI component with multi-cluster support:
+
+```bash
+docker run --name cruise-control-ui \
+  -p 8080:80 \
+  -v $(pwd)/config.csv:/usr/share/nginx/html/static/config.csv:ro \
+  devopsiaci/cruise-control-ui:0.4.0
+```
+
+The `config.csv` file format for multi-cluster configuration:
+
+```csv
+<group>,<cluster-name>,<cruise-control-url>
+develop,cluster-dev,/cluster-dev/kafkacruisecontrol/
+staging,cluster-staging,/cluster-staging/kafkacruisecontrol/
+cluster,cluster-prod,/cluster-prod/kafkacruisecontrol/
+```
+
+## Configuration
 
 ### Configure `cruise-control.properties`
 
-Review: [sample.cruise-control.properties](./config/cruisecontrol.properties)
+You must customize the configuration file with your Kafka cluster details. Review the sample configuration:
 
-### Run container
+- [Sample cruisecontrol.properties](./config/cruisecontrol.properties)
+- [LinkedIn Cruise Control configs](https://github.com/linkedin/cruise-control/tree/3.0.3/config)
 
-```command
-docker run --name <container-name>            \
-  -p 9090:9090                                \
-  -v config:/cruise-control/config            \
-  -v config/config.csv:/cruise-control/config \
-  jdk17-cc2.5.138-iam2.2.0
+Required configuration values:
+
+```properties
+bootstrap.servers=<kafka-broker-1>:9092,<kafka-broker-2>:9092
+zookeeper.connect=<zookeeper-1>:2181,<zookeeper-2>:2181
+
+# Webserver configuration
+webserver.http.port=9090
+webserver.api.urlprefix=/kafkacruisecontrol
+webserver.session.path=/
+
+# Topic configuration
+partition.metric.sample.store.topic=__CruiseControlMetrics
+broker.metric.sample.store.topic=__CruiseControlModelTrainingSamples
+metric.reporter.topic=__CruiseControlMetrics
 ```
 
-* More samples: [linkedin/cruise-control - configs](https://github.com/linkedin/cruise-control/tree/2.5.138/config)
-* More info: [linkedin/cruise-control - wiki](https://github.com/linkedin/cruise-control/wiki/)
+### Multi-cluster UI configuration
 
-## Build your custom image
+Create a `config.csv` file to configure multiple Kafka clusters in the UI:
 
-**REMEMBER**: Kafka and Cruise Control must be have the same Java running version. If you want other Java version check "Change Java version" and rebuild the image. [**All allowed tags**](https://hub.docker.com/r/devopsiaci/cruise-control/tags).
-
-### Pull image
-
-```command
-docker build -t <tag-name> .
+```csv
+develop,dev-kafka,/dev/kafkacruisecontrol/
+develop,dev-kafka-2,/dev-2/kafkacruisecontrol/
+staging,staging-kafka,/staging/kafkacruisecontrol/
+cluster,prod-kafka,/prod/kafkacruisecontrol/
+cluster,prod-kafka-dr,/prod-dr/kafkacruisecontrol/
 ```
 
-### Replace config
+Format: `<group>,<cluster-name>,<path-to-cruise-control-api>`
 
-You **must** change the next values with your properly nodes:
+The UI will group clusters by the first column, making it easier to manage multiple environments.
 
-```console
-bootstrap.servers=<list-kafka-brokers>
-zookeeper.connect=<list-zookeeper>
+## Build custom images
+
+### Build arguments
+
+Available build arguments:
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `OPENJDK_VERSION` | `17` | Amazon Corretto Java version |
+| `NGINX_VERSION` | `1.25-alpine` | Nginx version for UI |
+| `CC_TAG` | `3.0.3` | Cruise Control version |
+| `CC_UI_TAG` | `0.4.0` | Cruise Control UI version |
+| `AWS_MSK_IAM_AUTH_VERSION` | `2.3.5` | AWS MSK IAM Auth library version |
+
+### Build both Images
+
+Build the `cruise-control` server:
+
+```bash
+docker build \
+  --target cruise-control \
+  --build-arg CC_TAG=3.0.3 \
+  --build-arg OPENJDK_VERSION=17 \
+  --build-arg AWS_MSK_IAM_AUTH_VERSION=2.3.5 \
+  -t my-cruise-control:latest \
+  .
 ```
 
-### Run container
+Build the `cruise-control-ui`:
 
-```command
-docker run --name <container-name>            \
-  -p 9090:9090                                \
-  -v config:/cruise-control/config            \
-  -v config/config.csv:/cruise-control/config \
-  <tag-name>
+```bash
+docker build \
+  --target cruise-control-ui \
+  --build-arg CC_UI_TAG=0.4.0 \
+  --build-arg NGINX_VERSION=1.25-alpine \
+  -t my-cruise-control-ui:latest \
+  .
 ```
 
-* More samples: [linkedin/cruise-control - configs](https://github.com/linkedin/cruise-control/tree/2.5.138/config)
-* More info: [linkedin/cruise-control - wiki](https://github.com/linkedin/cruise-control/wiki/)
+### Build with different `Java` version
 
-## Configure Nginx
+IMPORTANT: Kafka and Cruise Control must use the same Java version.
 
-By default, Cruise Control can't change the location path if you want use another than `/`, for example: `/my-kafka-cruise-control`. So, you should configure your webserver to modify the request:
+```bash
+docker build \
+  --target cruise-control \
+  --build-arg OPENJDK_VERSION=11 \
+  -t cruise-control:jdk11 \
+  .
+```
 
-```command
-# sample cruise-control location
-location /<locationPath> {
+Supported Java versions: [Amazon Corretto tags](https://hub.docker.com/_/amazoncorretto/tags)
 
-    # rewrites
-    rewrite ^/<locationPath>/(.*) /$1 break;
+### Build with different cruise-control version
 
-    # proxy_pass configuration
-    proxy_pass http://<ip-host>:<port-cruise-control>;
+Check compatibility before changing versions:
+
+- [Environment Requirements](https://github.com/linkedin/cruise-control#environment-requirements)
+- [Known Compatibility Issues](https://github.com/linkedin/cruise-control#known-compatibility-issues)
+
+```bash
+docker build \
+  --target cruise-control \
+  --build-arg CC_TAG=2.5.138 \
+  -t cruise-control:2.5.138 \
+  .
+```
+
+## `docker-compose` sample
+
+Example `docker-compose.yml` for running both server and UI:
+
+```yaml
+version: '3.8'
+
+services:
+  cruise-control:
+    image: devopsiaci/cruise-control:jdk17-cc3.0.3-iam2.3.5
+    container_name: cruise-control-server
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config:/cruise-control/config:ro
+    environment:
+      JAVA_OPTS: "-Xms512m -Xmx2g -Djava.security.egd=file:/dev/./urandom"
+    restart: unless-stopped
+
+  cruise-control-ui:
+    image: devopsiaci/cruise-control-ui:0.4.0
+    container_name: cruise-control-ui
+    ports:
+      - "8080:80"
+    volumes:
+      - ./config.csv:/usr/share/nginx/html/static/config.csv:ro
+    restart: unless-stopped
+    depends_on:
+      - cruise-control
+```
+
+## Nginx reverse proxy configuration
+
+If you need to serve the UI under a specific path (e.g., `/cruise-control`), configure your reverse proxy:
+
+### Nginx configuration
+
+```nginx
+location /cruise-control {
+    # Rewrite path
+    rewrite ^/cruise-control/(.*) /$1 break;
+
+    # Proxy configuration
+    proxy_pass http://cruise-control-ui:80;
     proxy_pass_request_headers on;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
 
-    # sub_filters
-    sub_filter /static/js          /<locationPath>/static/js;
-    sub_filter /static/css         /<locationPath>/static/css;
-    sub_filter /static/cc-logo.png /<locationPath>/static/cc-logo.png;
-    sub_filter /kafkacruisecontrol /<locationPath>/kafkacruisecontrol;
+    # Rewrite static assets
+    sub_filter /static/js          /cruise-control/static/js;
+    sub_filter /static/css         /cruise-control/static/css;
+    sub_filter /static/cc-logo.png /cruise-control/static/cc-logo.png;
+    sub_filter /kafkacruisecontrol /cruise-control/kafkacruisecontrol;
     sub_filter_last_modified on;
     sub_filter_once off;
     sub_filter_types *;
 }
 ```
 
-## Change Java version
+## Contributing
 
-You can compile with other Java version, you can check all posible tags from: [amazoncorretto](https://hub.docker.com/_/amazoncorretto/tags)
-
-```command
-docker build --build-arg OPENJDK_VERSION=<version> -t <image-name> . # example version: 11
-```
-
-## Change Cruise Control and Cruise Control UI version
-
-You can change the default Cruise Control version and Cruise Control UI version with `CC_TAG` and `CC_UI_TAG` arguments (please check [environment-requirements](https://github.com/linkedin/cruise-control#environment-requirements) and [compatibilities](https://github.com/linkedin/cruise-control#known-compatibility-issues))
-
-```command
-docker build --build-arg CC_TAG=<version> --build-arg CC_UI_TAG=<version> -t <image-name> . # example CC_TAG=2.5.138 and CC_UI_TAG=0.4.0
-```
+Contributions are welcome! Please open an issue or submit a pull request.
