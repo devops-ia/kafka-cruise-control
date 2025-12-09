@@ -24,15 +24,15 @@ jobs:
         id: current_release
         run: |
           # cc_release
-          cc_current_release=$(grep "ARG CC_TAG" Dockerfile | cut -d '=' -f 2)
+          cc_current_release=$(grep "ARG CC_TAG" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "cc_current_release=$cc_current_release" >> $GITHUB_OUTPUT
 
           # cc_ui_release
-          cc_ui_current_release=$(grep "ARG CC_TAG_UI" Dockerfile | cut -d '=' -f 2)
+          cc_ui_current_release=$(grep "ARG CC_TAG_UI" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "cc_ui_current_release=$cc_ui_current_release" >> $GITHUB_OUTPUT
 
           # iam_release
-          iam_current_release=$(grep "ARG AWS_MSK_IAM_AUTH_VERSION" Dockerfile | cut -d '=' -f 2)
+          iam_current_release=$(grep "ARG AWS_MSK_IAM_AUTH_VERSION" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "iam_current_release=$iam_current_release" >> $GITHUB_OUTPUT
 
       - name: Install updatecli
@@ -48,15 +48,15 @@ jobs:
         id: latest_release
         run: |
           # cc_release
-          cc_latest_release=$(grep "ARG CC_TAG" Dockerfile | cut -d '=' -f 2)
+          cc_latest_release=$(grep "ARG CC_TAG" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "cc_latest_release=$cc_latest_release" >> $GITHUB_OUTPUT
 
           # cc_ui_release
-          cc_ui_latest_release=$(grep "ARG CC_TAG_UI" Dockerfile | cut -d '=' -f 2)
+          cc_ui_latest_release=$(grep "ARG CC_TAG_UI" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "cc_ui_latest_release=$cc_ui_latest_release" >> $GITHUB_OUTPUT
 
           # iam_release
-          iam_latest_release=$(grep "ARG AWS_MSK_IAM_AUTH_VERSION" Dockerfile | cut -d '=' -f 2)
+          iam_latest_release=$(grep "ARG AWS_MSK_IAM_AUTH_VERSION" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "iam_latest_release=$iam_latest_release" >> $GITHUB_OUTPUT
 
           # complete_tag
