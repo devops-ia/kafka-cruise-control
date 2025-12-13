@@ -1,4 +1,4 @@
-name: Create Cruise Control release
+name: Create release
 
 env:
   DOCKERHUB_USER: devopsiaci
