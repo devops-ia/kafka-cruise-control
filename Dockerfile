@@ -7,7 +7,7 @@ ARG NGINX_VERSION=1.25-alpine
 ###
 FROM amazoncorretto:${OPENJDK_VERSION} AS build
 
-ARG CC_TAG=3.0.3
+ARG CC_TAG=2.5.146
 ARG CC_UI_TAG=0.4.0
 ARG AWS_MSK_IAM_AUTH_VERSION=2.3.5
 
@@ -58,7 +58,7 @@ CMD ["nginx", "-g", "daemon off;"]
 ###
 FROM amazoncorretto:${OPENJDK_VERSION} AS cruise-control
 
-ARG CC_TAG=3.0.3
+ARG CC_TAG=2.5.146
 ARG CC_USER=nobody
 ARG CC_UID=99
 ARG CC_GID=99
