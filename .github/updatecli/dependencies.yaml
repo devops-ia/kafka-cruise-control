@@ -1,3 +1,16 @@
+---
+# Reference: https://github.com/linkedin/cruise-control#environment-requirements
+# The main branch of Cruise Control is compatible with:
+# - Kafka 2.5+ (Releases 2.5.*)
+# - Kafka 2.6  (Releases 2.5.11+)
+# - Kafka 2.7  (Releases 2.5.36+)
+# - Kafka 2.8  (Releases 2.5.66+)
+# - Kafka 3.0  (Releases 2.5.85+)
+# - Kafka 3.1  (Releases 2.5.85+)
+# - Kafka 3.8  (Releases 2.5.142+)
+# - Kafka 3.9  (Releases 2.5.143+)
+# - Kafka 4.0  (Releases 2.5.144+)
+
 scms:
   cruise-control:
     kind: github
@@ -23,6 +36,7 @@ sources:
     spec:
       versionfilter:
         kind: semver
+        pattern: "~2"
   cruise-control-ui:
     kind: githubrelease
     spec:
