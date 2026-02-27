@@ -1,18 +1,19 @@
-name: Check linkedin/cruise-control new release
+name: Docker Check Releases
 
 on:
   workflow_dispatch:
   schedule:
     - cron: '0 0 * * *'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   check-and-release:
     runs-on: ubuntu-latest
 
-    permissions:
-      pull-requests: write
-      contents: read
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

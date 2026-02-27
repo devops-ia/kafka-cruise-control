@@ -1,4 +1,6 @@
-name: Create release
+name: Build and Push Docker Image
+
+permissions: {}
 
 env:
   DOCKERHUB_USER: devopsiaci
