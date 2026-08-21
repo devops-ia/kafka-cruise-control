@@ -1,0 +1,33 @@
+name: Docker PR Check
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  dive-check:
+    name: Dive image efficiency check (${{ matrix.image_type }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image_type: [cruise-control, cruise-control-ui]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build image
+        run: docker build --build-arg OPENJDK_VERSION=17 --target ${{ matrix.image_type }} -t kafka-cruise-control:${{ matrix.image_type }} .
+
+      - name: Run dive
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$PWD":/repo \
+            -w /repo \
+            wagoodman/dive:v0.13.1 \
+            kafka-cruise-control:${{ matrix.image_type }} --ci --ci-config .dive-ci
