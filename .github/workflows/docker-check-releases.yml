@@ -83,7 +83,7 @@ jobs:
               body+="Cruise Control version:\n"
               body+="  - :information_source: Current: \`$cc_current_release\`\n"
               body+="  - :up: Upgrade: \`$cc_latest_release\`\n"
-              body+="  - Changelog: https://github.com/linkedin/cruise-control/releases/tag/$cc_latest_release\n\n"
+              body+="  - Changelog: https://github.com/cruise-control-for-kafka/cruise-control/releases/tag/$cc_latest_release\n\n"
 
               echo "release_changed=true" >> $GITHUB_OUTPUT
           fi
@@ -93,7 +93,7 @@ jobs:
               body+="Cruise Control UI version:\n"
               body+="  - :information_source: Current: \`$cc_ui_current_release\`\n"
               body+="  - :up: Upgrade: \`$cc_ui_latest_release\`\n"
-              body+="  - Changelog: https://github.com/linkedin/cruise-control-ui/releases/tag/v$cc_ui_latest_release\n\n"
+              body+="  - Changelog: https://github.com/cruise-control-for-kafka/cruise-control-ui/releases/tag/v$cc_ui_latest_release\n\n"
 
               echo "release_changed=true" >> $GITHUB_OUTPUT
           fi

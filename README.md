@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Optimized multi-stage Docker images for Cruise Control and Cruise Control UI for Apache Kafka. Based on [linkedin/cruise-control](https://github.com/linkedin/cruise-control).
+Optimized multi-stage Docker images for Cruise Control and Cruise Control UI for Apache Kafka. Based on [cruise-control-for-kafka/cruise-control](https://github.com/cruise-control-for-kafka/cruise-control).
 
 - **Cruise Control Server**: Java-based service for managing Kafka clusters
 - **Cruise Control UI**: Nginx-based web interface with multi-cluster support
@@ -91,7 +91,7 @@ cluster,cluster-prod,/cluster-prod/kafkacruisecontrol/
 You must customize the configuration file with your Kafka cluster details. Review the sample configuration:
 
 - [Sample cruisecontrol.properties](./config/cruisecontrol.properties)
-- [LinkedIn Cruise Control configs](https://github.com/linkedin/cruise-control/tree/3.0.3/config)
+- [LinkedIn Cruise Control configs](https://github.com/cruise-control-for-kafka/cruise-control/tree/3.0.3/config)
 
 Required configuration values:
 
@@ -183,8 +183,8 @@ Supported Java versions: [Amazon Corretto tags](https://hub.docker.com/_/amazonc
 
 Check compatibility before changing versions:
 
-- [Environment Requirements](https://github.com/linkedin/cruise-control#environment-requirements)
-- [Known Compatibility Issues](https://github.com/linkedin/cruise-control#known-compatibility-issues)
+- [Environment Requirements](https://github.com/cruise-control-for-kafka/cruise-control#environment-requirements)
+- [Known Compatibility Issues](https://github.com/cruise-control-for-kafka/cruise-control#known-compatibility-issues)
 
 ```bash
 docker build \

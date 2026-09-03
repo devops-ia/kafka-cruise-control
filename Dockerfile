@@ -13,8 +13,8 @@ ARG AWS_MSK_IAM_AUTH_VERSION=2.3.7
 
 WORKDIR /cruise-control
 
-RUN yum install -y git tar gzip curl && \
-    git clone --depth 1 -b ${CC_TAG} https://github.com/linkedin/cruise-control.git . && \
+RUN yum install -y git tar gzip findutils && \
+    git clone --depth 1 -b ${CC_TAG} https://github.com/cruise-control-for-kafka/cruise-control.git . && \
     curl -fsSL -o cruise-control-ui.tar.gz \
       "https://github.com/linkedin/cruise-control-ui/releases/download/v${CC_UI_TAG}/cruise-control-ui-${CC_UI_TAG}.tar.gz" && \
     tar xzf cruise-control-ui.tar.gz && \
