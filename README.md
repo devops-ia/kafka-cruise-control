@@ -16,7 +16,7 @@ Default versions:
 - Cruise Control UI: `0.4.0`
 - AWS IAM Auth: `2.3.5`
 - Java (Amazon Corretto): `17`
-- Nginx: `1.25-alpine`
+- Nginx: `1.28-alpine`
 
 ## Available images
 
@@ -135,7 +135,7 @@ Available build arguments:
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `OPENJDK_VERSION` | `17` | Amazon Corretto Java version |
-| `NGINX_VERSION` | `1.25-alpine` | Nginx version for UI |
+| `NGINX_VERSION` | `1.28-alpine` | Nginx version for UI |
 | `CC_TAG` | `3.0.3` | Cruise Control version |
 | `CC_UI_TAG` | `0.4.0` | Cruise Control UI version |
 | `AWS_MSK_IAM_AUTH_VERSION` | `2.3.5` | AWS MSK IAM Auth library version |
@@ -160,7 +160,7 @@ Build the `cruise-control-ui`:
 docker build \
   --target cruise-control-ui \
   --build-arg CC_UI_TAG=0.4.0 \
-  --build-arg NGINX_VERSION=1.25-alpine \
+  --build-arg NGINX_VERSION=1.28-alpine \
   -t my-cruise-control-ui:latest \
   .
 ```
