@@ -59,9 +59,8 @@ CMD ["nginx", "-g", "daemon off;"]
 FROM amazoncorretto:${OPENJDK_VERSION} AS cruise-control
 
 ARG CC_TAG=2.5.146
-ARG CC_USER=nobody
-ARG CC_UID=99
-ARG CC_GID=99
+ARG CC_UID=65534
+ARG CC_GID=65534
 
 LABEL maintainer="Iván Alejandro Marugán <hello@ialejandro.rocks>" \
       org.opencontainers.image.title="Cruise Control" \
@@ -74,9 +73,10 @@ COPY --from=build --chown=${CC_UID}:${CC_GID} /cruise-control/cruise-control/bui
 COPY --from=build --chown=${CC_UID}:${CC_GID} /cruise-control/cruise-control/build/libs/aws-msk-iam-auth.jar /cruise-control/cruise-control/build/libs/aws-msk-iam-auth.jar
 COPY --from=build --chown=${CC_UID}:${CC_GID} /cruise-control/kafka-cruise-control-start.sh /cruise-control/kafka-cruise-control-start.sh
 
-RUN chmod +x /cruise-control/kafka-cruise-control-start.sh
+RUN chmod +x /cruise-control/kafka-cruise-control-start.sh && \
+    install -d -o ${CC_UID} -g ${CC_GID} /cruise-control/logs
 
-USER ${CC_USER}
+USER ${CC_UID}:${CC_GID}
 WORKDIR /cruise-control
 
 CMD ["./kafka-cruise-control-start.sh", "config/cruisecontrol.properties"]
