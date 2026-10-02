@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 ARG OPENJDK_VERSION=17
-ARG NGINX_VERSION=1.25-alpine
+ARG NGINX_VERSION=1.28-alpine
 
 ###
 # build stage
@@ -19,6 +19,8 @@ RUN yum install -y git tar gzip findutils && \
       "https://github.com/linkedin/cruise-control-ui/releases/download/v${CC_UI_TAG}/cruise-control-ui-${CC_UI_TAG}.tar.gz" && \
     tar xzf cruise-control-ui.tar.gz && \
     mv cruise-control-ui cruise-control/ && \
+    mkdir -p cruise-control/cruise-control-ui/dist/static && \
+    printf "local,local,/kafkacruisecontrol/\n" > cruise-control/cruise-control-ui/dist/static/config.csv && \
     rm -f cruise-control-ui.tar.gz && \
     ./gradlew --no-daemon --no-parallel -x test jar copyDependantLibs && \
     mv cruise-control/build/libs/cruise-control-*.jar cruise-control/build/libs/cruise-control.jar && \
@@ -44,10 +46,6 @@ LABEL maintainer="Iván Alejandro Marugán <hello@ialejandro.rocks>" \
       org.opencontainers.image.version="${CC_UI_TAG}"
 
 COPY --from=build --chown=${UI_UID}:${UI_GID} /cruise-control/cruise-control/cruise-control-ui/dist /usr/share/nginx/html
-
-RUN mkdir -p /usr/share/nginx/html/static && \
-    printf "local,local,/kafkacruisecontrol/\n" > /usr/share/nginx/html/static/config.csv && \
-    chown -R ${UI_UID}:${UI_GID} /usr/share/nginx/html
 
 USER ${UI_UID}
 
