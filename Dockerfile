@@ -7,7 +7,7 @@ ARG NGINX_VERSION=1.28-alpine
 ###
 FROM amazoncorretto:${OPENJDK_VERSION} AS build
 
-ARG CC_TAG=2.5.146
+ARG CC_TAG=3.1.0
 ARG CC_UI_TAG=0.4.0
 ARG AWS_MSK_IAM_AUTH_VERSION=2.3.9
 
@@ -23,8 +23,6 @@ RUN yum install -y git tar gzip findutils && \
     printf "local,local,/kafkacruisecontrol/\n" > cruise-control/cruise-control-ui/dist/static/config.csv && \
     rm -f cruise-control-ui.tar.gz && \
     ./gradlew --no-daemon --no-parallel -x test jar copyDependantLibs && \
-    mv cruise-control/build/libs/cruise-control-*.jar cruise-control/build/libs/cruise-control.jar && \
-    mv cruise-control/build/dependant-libs/cruise-control-metrics-reporter-*.jar cruise-control/build/dependant-libs/cruise-control-metrics-reporter.jar && \
     curl -fsSL -o cruise-control/build/libs/aws-msk-iam-auth.jar \
       "https://github.com/aws/aws-msk-iam-auth/releases/download/v${AWS_MSK_IAM_AUTH_VERSION}/aws-msk-iam-auth-${AWS_MSK_IAM_AUTH_VERSION}-all.jar" && \
     yum clean all && \
@@ -47,6 +45,10 @@ LABEL maintainer="Iván Alejandro Marugán <hello@ialejandro.rocks>" \
 
 COPY --from=build --chown=${UI_UID}:${UI_GID} /cruise-control/cruise-control/cruise-control-ui/dist /usr/share/nginx/html
 
+# Non-root nginx needs a writable cache dir and a pid file outside /run
+RUN chown -R ${UI_UID}:${UI_GID} /var/cache/nginx && \
+    sed -i 's#/run/nginx.pid#/tmp/nginx.pid#' /etc/nginx/nginx.conf
+
 USER ${UI_UID}
 
 CMD ["nginx", "-g", "daemon off;"]
@@ -56,7 +58,7 @@ CMD ["nginx", "-g", "daemon off;"]
 ###
 FROM amazoncorretto:${OPENJDK_VERSION} AS cruise-control
 
-ARG CC_TAG=2.5.146
+ARG CC_TAG=3.1.0
 ARG CC_UID=65534
 ARG CC_GID=65534
 

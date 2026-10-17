@@ -12,11 +12,31 @@ Optimized multi-stage Docker images for Cruise Control and Cruise Control UI for
 
 Default versions:
 
-- Cruise Control: `3.0.3`
+- Cruise Control: `3.1.0`
 - Cruise Control UI: `0.4.0`
-- AWS IAM Auth: `2.3.5`
+- AWS IAM Auth: `2.3.9`
 - Java (Amazon Corretto): `17`
 - Nginx: `1.28-alpine`
+
+## Supported versions and migration from 2.x
+
+These images only support Cruise Control **3.x** (`3.1.0` or newer). Cruise Control 3.1.0 requires Java 17 and builds against Kafka `4.3.1`.
+
+- **Cruise Control 2.x**: not built anymore. The `jdk17-cc2.5.146-*` images already published keep working; keep using them if you need 2.x.
+- **Metrics reporter**: update `cruise-control-metrics-reporter` on every Kafka broker to the 3.1.0 version, together with the server. The jar is shipped in the image at `/cruise-control/cruise-control/build/dependant-libs/cruise-control-metrics-reporter.jar`.
+- **Configuration**: the logging file is now `log4j2.properties` (`log4j.properties` is not read anymore), and `cluster.configs.file` points to `config/clusterConfigs.json`. If you mount `config/` over `/cruise-control/config`, it must contain every file referenced by `cruisecontrol.properties` (see [config](./config)).
+- **ZooKeeper**: `zookeeper.connect` is not needed; the server starts against a Kafka KRaft cluster without it.
+
+Java versions:
+
+| Java | Status | Reason |
+|------|--------|--------|
+| 17 | Supported (default) | Required by Cruise Control 3.1.0 |
+| 21 | Supported | Image builds and runs against Kafka KRaft without reflection or Jetty errors |
+| 25 | Not supported | The Cruise Control 3.1.0 build uses Gradle 8.5, which cannot run on JDK 25 |
+| 11 | Not supported | Cruise Control 3.x requires Java 17 |
+
+Compatible Kafka versions: `2.5` to `4.3`, see the [environment requirements](https://github.com/cruise-control-for-kafka/cruise-control/tree/3.1.0#environment-requirements).
 
 ## Available images
 
@@ -61,7 +81,7 @@ Run the server component:
 docker run --name cruise-control-server \
   -p 9090:9090 \
   -v $(pwd)/config:/cruise-control/config \
-  devopsiaci/cruise-control:jdk17-cc3.0.3-iam2.3.5
+  devopsiaci/cruise-control:jdk17-cc3.1.0-iam2.3.9
 ```
 
 ### `cruise-control-ui`
@@ -91,13 +111,12 @@ cluster,cluster-prod,/cluster-prod/kafkacruisecontrol/
 You must customize the configuration file with your Kafka cluster details. Review the sample configuration:
 
 - [Sample cruisecontrol.properties](./config/cruisecontrol.properties)
-- [LinkedIn Cruise Control configs](https://github.com/cruise-control-for-kafka/cruise-control/tree/3.0.3/config)
+- [Cruise Control configs](https://github.com/cruise-control-for-kafka/cruise-control/tree/3.1.0/config)
 
 Required configuration values:
 
 ```properties
 bootstrap.servers=<kafka-broker-1>:9092,<kafka-broker-2>:9092
-zookeeper.connect=<zookeeper-1>:2181,<zookeeper-2>:2181
 
 # Webserver configuration
 webserver.http.port=9090
@@ -136,9 +155,9 @@ Available build arguments:
 |----------|---------|-------------|
 | `OPENJDK_VERSION` | `17` | Amazon Corretto Java version |
 | `NGINX_VERSION` | `1.28-alpine` | Nginx version for UI |
-| `CC_TAG` | `3.0.3` | Cruise Control version |
+| `CC_TAG` | `3.1.0` | Cruise Control version |
 | `CC_UI_TAG` | `0.4.0` | Cruise Control UI version |
-| `AWS_MSK_IAM_AUTH_VERSION` | `2.3.5` | AWS MSK IAM Auth library version |
+| `AWS_MSK_IAM_AUTH_VERSION` | `2.3.9` | AWS MSK IAM Auth library version |
 
 ### Build both Images
 
@@ -147,9 +166,9 @@ Build the `cruise-control` server:
 ```bash
 docker build \
   --target cruise-control \
-  --build-arg CC_TAG=3.0.3 \
+  --build-arg CC_TAG=3.1.0 \
   --build-arg OPENJDK_VERSION=17 \
-  --build-arg AWS_MSK_IAM_AUTH_VERSION=2.3.5 \
+  --build-arg AWS_MSK_IAM_AUTH_VERSION=2.3.9 \
   -t my-cruise-control:latest \
   .
 ```
@@ -172,12 +191,12 @@ IMPORTANT: Kafka and Cruise Control must use the same Java version.
 ```bash
 docker build \
   --target cruise-control \
-  --build-arg OPENJDK_VERSION=11 \
-  -t cruise-control:jdk11 \
+  --build-arg OPENJDK_VERSION=21 \
+  -t cruise-control:jdk21 \
   .
 ```
 
-Supported Java versions: [Amazon Corretto tags](https://hub.docker.com/_/amazoncorretto/tags)
+Supported Java versions: `17` and `21` (see [Supported versions](#supported-versions-and-migration-from-2x)). Image tags are published as `jdk<N>-cc<CC_TAG>-iam<AWS_MSK_IAM_AUTH_VERSION>`.
 
 ### Build with different cruise-control version
 
@@ -189,8 +208,8 @@ Check compatibility before changing versions:
 ```bash
 docker build \
   --target cruise-control \
-  --build-arg CC_TAG=2.5.138 \
-  -t cruise-control:2.5.138 \
+  --build-arg CC_TAG=<3.x-tag> \
+  -t cruise-control:<3.x-tag> \
   .
 ```
 
@@ -203,7 +222,7 @@ version: '3.8'
 
 services:
   cruise-control:
-    image: devopsiaci/cruise-control:jdk17-cc3.0.3-iam2.3.5
+    image: devopsiaci/cruise-control:jdk17-cc3.1.0-iam2.3.9
     container_name: cruise-control-server
     ports:
       - "9090:9090"
