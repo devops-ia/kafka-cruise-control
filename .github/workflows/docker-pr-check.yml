@@ -10,18 +10,23 @@ on:
 
 jobs:
   dive-check:
-    name: Dive image efficiency check (${{ matrix.image_type }})
+    name: Dive image efficiency check (${{ matrix.image_type }}, JDK ${{ matrix.jdk_version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image_type: [cruise-control, cruise-control-ui]
+        jdk_version: [17, 21]
+        image_type: [cruise-control]
+        include:
+          # the UI does not depend on the JDK: check it once
+          - jdk_version: 17
+            image_type: cruise-control-ui
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Build image
-        run: docker build --build-arg OPENJDK_VERSION=17 --target ${{ matrix.image_type }} -t kafka-cruise-control:${{ matrix.image_type }} .
+        run: docker build --build-arg OPENJDK_VERSION=${{ matrix.jdk_version }} --target ${{ matrix.image_type }} -t kafka-cruise-control:${{ matrix.image_type }} .
 
       - name: Run dive
         run: |

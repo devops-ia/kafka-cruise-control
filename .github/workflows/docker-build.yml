@@ -23,8 +23,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        jdk_version: [17]
-        image_type: [cruise-control, cruise-control-ui]
+        jdk_version: [17, 21]
+        image_type: [cruise-control]
+        include:
+          # the UI does not depend on the JDK: build it once
+          - jdk_version: 17
+            image_type: cruise-control-ui
 
     permissions:
       contents: write
@@ -192,9 +196,9 @@ jobs:
 
       - name: "Update README.md default version"
         run: |
-          sed -i "s/\* Cruise Control: .*/* Cruise Control: \`${{ steps.current_tag.outputs.cc_current_tag }}\`/" README.md
-          sed -i "s/\* Cruise Control UI: .*/* Cruise Control UI: \`${{ steps.current_tag.outputs.cc_ui_current_tag }}\`/" README.md
-          sed -i "s/\* AWS IAM Auth: .*/* AWS IAM Auth: \`${{ steps.current_tag.outputs.iam_current_tag }}\`/" README.md
+          sed -i "s/^- Cruise Control: .*/- Cruise Control: \`${{ steps.current_tag.outputs.cc_current_tag }}\`/" README.md
+          sed -i "s/^- Cruise Control UI: .*/- Cruise Control UI: \`${{ steps.current_tag.outputs.cc_ui_current_tag }}\`/" README.md
+          sed -i "s/^- AWS IAM Auth: .*/- AWS IAM Auth: \`${{ steps.current_tag.outputs.iam_current_tag }}\`/" README.md
 
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"

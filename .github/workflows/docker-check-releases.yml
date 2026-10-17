@@ -34,7 +34,7 @@ jobs:
           echo "cc_current_release=$cc_current_release" >> $GITHUB_OUTPUT
 
           # cc_ui_release
-          cc_ui_current_release=$(grep "ARG CC_TAG_UI" Dockerfile | cut -d '=' -f 2 | head -1)
+          cc_ui_current_release=$(grep "ARG CC_UI_TAG" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "cc_ui_current_release=$cc_ui_current_release" >> $GITHUB_OUTPUT
 
           # iam_release
@@ -58,7 +58,7 @@ jobs:
           echo "cc_latest_release=$cc_latest_release" >> $GITHUB_OUTPUT
 
           # cc_ui_release
-          cc_ui_latest_release=$(grep "ARG CC_TAG_UI" Dockerfile | cut -d '=' -f 2 | head -1)
+          cc_ui_latest_release=$(grep "ARG CC_UI_TAG" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "cc_ui_latest_release=$cc_ui_latest_release" >> $GITHUB_OUTPUT
 
           # iam_release
@@ -93,7 +93,7 @@ jobs:
               body+="Cruise Control UI version:\n"
               body+="  - :information_source: Current: \`$cc_ui_current_release\`\n"
               body+="  - :up: Upgrade: \`$cc_ui_latest_release\`\n"
-              body+="  - Changelog: https://github.com/cruise-control-for-kafka/cruise-control-ui/releases/tag/v$cc_ui_latest_release\n\n"
+              body+="  - Changelog: https://github.com/linkedin/cruise-control-ui/releases/tag/v$cc_ui_latest_release\n\n"
 
               echo "release_changed=true" >> $GITHUB_OUTPUT
           fi
