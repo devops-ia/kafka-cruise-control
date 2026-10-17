@@ -45,6 +45,10 @@ LABEL maintainer="Iván Alejandro Marugán <hello@ialejandro.rocks>" \
 
 COPY --from=build --chown=${UI_UID}:${UI_GID} /cruise-control/cruise-control/cruise-control-ui/dist /usr/share/nginx/html
 
+# Non-root nginx needs a writable cache dir and a pid file outside /run
+RUN chown -R ${UI_UID}:${UI_GID} /var/cache/nginx && \
+    sed -i 's#/run/nginx.pid#/tmp/nginx.pid#' /etc/nginx/nginx.conf
+
 USER ${UI_UID}
 
 CMD ["nginx", "-g", "daemon off;"]
