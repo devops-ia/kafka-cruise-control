@@ -16,10 +16,6 @@ jobs:
       matrix:
         jdk_version: [17, 21]
         image_type: [cruise-control]
-        include:
-          # the UI does not depend on the JDK: check it once
-          - jdk_version: 17
-            image_type: cruise-control-ui
 
     steps:
       - name: Checkout

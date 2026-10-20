@@ -39,16 +39,6 @@ sources:
       versionfilter:
         kind: semver
         pattern: ">=3.1.0"
-  cruise-control-ui:
-    kind: githubrelease
-    spec:
-      owner: "linkedin"
-      repository: "cruise-control-ui"
-      token: {{ requiredEnv "GITHUB_TOKEN" }}
-      versionFilter:
-        kind: semver
-    transformers:
-      - trimprefix: "v"
 conditions: {}
 targets:
   update-aws-msk-iam-auth-version:
@@ -69,12 +59,3 @@ targets:
       instruction:
         keyword: "ARG"
         matcher: "CC_TAG"
-  update-cc-ui-tag:
-    name: "Update the value of ARG CC_UI_TAG in the Dockerfile"
-    sourceid: cruise-control-ui
-    kind: dockerfile
-    spec:
-      file: Dockerfile
-      instruction:
-        keyword: "ARG"
-        matcher: "CC_UI_TAG"

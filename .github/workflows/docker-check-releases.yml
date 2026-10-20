@@ -33,10 +33,6 @@ jobs:
           cc_current_release=$(grep "ARG CC_TAG" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "cc_current_release=$cc_current_release" >> $GITHUB_OUTPUT
 
-          # cc_ui_release
-          cc_ui_current_release=$(grep "ARG CC_UI_TAG" Dockerfile | cut -d '=' -f 2 | head -1)
-          echo "cc_ui_current_release=$cc_ui_current_release" >> $GITHUB_OUTPUT
-
           # iam_release
           iam_current_release=$(grep "ARG AWS_MSK_IAM_AUTH_VERSION" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "iam_current_release=$iam_current_release" >> $GITHUB_OUTPUT
@@ -57,10 +53,6 @@ jobs:
           cc_latest_release=$(grep "ARG CC_TAG" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "cc_latest_release=$cc_latest_release" >> $GITHUB_OUTPUT
 
-          # cc_ui_release
-          cc_ui_latest_release=$(grep "ARG CC_UI_TAG" Dockerfile | cut -d '=' -f 2 | head -1)
-          echo "cc_ui_latest_release=$cc_ui_latest_release" >> $GITHUB_OUTPUT
-
           # iam_release
           iam_latest_release=$(grep "ARG AWS_MSK_IAM_AUTH_VERSION" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "iam_latest_release=$iam_latest_release" >> $GITHUB_OUTPUT
@@ -73,8 +65,6 @@ jobs:
         env:
           cc_current_release: ${{ steps.current_release.outputs.cc_current_release }}
           cc_latest_release: ${{ steps.latest_release.outputs.cc_latest_release }}
-          cc_ui_current_release: ${{ steps.current_release.outputs.cc_ui_current_release }}
-          cc_ui_latest_release: ${{ steps.latest_release.outputs.cc_ui_latest_release }}
           iam_current_release: ${{ steps.current_release.outputs.iam_current_release }}
           iam_latest_release: ${{ steps.latest_release.outputs.iam_latest_release }}
         run: |
@@ -84,16 +74,6 @@ jobs:
               body+="  - :information_source: Current: \`$cc_current_release\`\n"
               body+="  - :up: Upgrade: \`$cc_latest_release\`\n"
               body+="  - Changelog: https://github.com/cruise-control-for-kafka/cruise-control/releases/tag/$cc_latest_release\n\n"
-
-              echo "release_changed=true" >> $GITHUB_OUTPUT
-          fi
-
-          # Cruise Control UI
-          if [ "$cc_ui_current_release" != "$cc_ui_latest_release" ]; then
-              body+="Cruise Control UI version:\n"
-              body+="  - :information_source: Current: \`$cc_ui_current_release\`\n"
-              body+="  - :up: Upgrade: \`$cc_ui_latest_release\`\n"
-              body+="  - Changelog: https://github.com/linkedin/cruise-control-ui/releases/tag/v$cc_ui_latest_release\n\n"
 
               echo "release_changed=true" >> $GITHUB_OUTPUT
           fi
