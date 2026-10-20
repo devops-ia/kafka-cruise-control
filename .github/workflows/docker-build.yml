@@ -5,7 +5,6 @@ permissions: {}
 env:
   DOCKERHUB_USER: devopsiaci
   DOCKERHUB_REPO_CC: cruise-control
-  DOCKERHUB_REPO_UI: cruise-control-ui
   GHCR_REGISTRY: ghcr.io
   GHCR_REPO: ${{ github.repository }}
 
@@ -25,10 +24,6 @@ jobs:
       matrix:
         jdk_version: [17, 21]
         image_type: [cruise-control]
-        include:
-          # the UI does not depend on the JDK: build it once
-          - jdk_version: 17
-            image_type: cruise-control-ui
 
     permissions:
       contents: write
@@ -49,21 +44,12 @@ jobs:
           cc_current_tag=$(grep "ARG CC_TAG" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "cc_current_tag=$cc_current_tag" >> $GITHUB_OUTPUT
 
-          # cc_ui_tag
-          cc_ui_current_tag=$(grep "ARG CC_UI_TAG" Dockerfile | cut -d '=' -f 2 | head -1)
-          echo "cc_ui_current_tag=$cc_ui_current_tag" >> $GITHUB_OUTPUT
-
           # iam_tag
           iam_current_tag=$(grep "ARG AWS_MSK_IAM_AUTH_VERSION" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "iam_current_tag=$iam_current_tag" >> $GITHUB_OUTPUT
 
           # complete tag for cruise-control
-          if [ "${{ matrix.image_type }}" == "cruise-control" ]; then
-            echo "complete_tag=jdk${{ matrix.jdk_version }}-cc${cc_current_tag}-iam${iam_current_tag}" >> $GITHUB_OUTPUT
-          else
-            # tag for cruise-control-ui (semver only)
-            echo "complete_tag=${cc_ui_current_tag}" >> $GITHUB_OUTPUT
-          fi
+          echo "complete_tag=jdk${{ matrix.jdk_version }}-cc${cc_current_tag}-iam${iam_current_tag}" >> $GITHUB_OUTPUT
 
       - name: "Set Docker metadata for cruise-control"
         if: matrix.image_type == 'cruise-control'
@@ -80,24 +66,6 @@ jobs:
             org.opencontainers.image.vendor=DevOps IA
           tags: |
             type=raw,value=${{ steps.current_tag.outputs.complete_tag }}
-            type=sha,enable=false
-
-      - name: "Set Docker metadata for cruise-control-ui"
-        if: matrix.image_type == 'cruise-control-ui'
-        id: meta_ui
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
-        with:
-          images: |
-            ${{ env.DOCKERHUB_USER }}/${{ env.DOCKERHUB_REPO_UI }}
-            ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}-ui
-          labels: |
-            org.opencontainers.image.maintainer=ialejandro
-            org.opencontainers.image.title=Cruise Control UI
-            org.opencontainers.image.description=Cruise Control UI served by Nginx
-            org.opencontainers.image.vendor=DevOps IA
-          tags: |
-            type=raw,value=${{ steps.current_tag.outputs.complete_tag }}
-            type=raw,value=latest
             type=sha,enable=false
 
       - name: Set up QEMU
@@ -135,35 +103,12 @@ jobs:
           tags: ${{ steps.meta_cc.outputs.tags }}
           target: cruise-control
 
-      - name: "Build and push cruise-control-ui image"
-        if: matrix.image_type == 'cruise-control-ui'
-        id: push_ui
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          cache-from: type=gha,scope=${{ matrix.image_type }}-jdk${{ matrix.jdk_version }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image_type }}-jdk${{ matrix.jdk_version }}
-          context: .
-          labels: ${{ steps.meta_ui.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
-          push: true
-          sbom: true
-          tags: ${{ steps.meta_ui.outputs.tags }}
-          target: cruise-control-ui
-
       - name: "[GHCR] Generate artifact for cruise-control"
         if: matrix.image_type == 'cruise-control'
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-name: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}
           subject-digest: ${{ steps.push_cc.outputs.digest }}
-          push-to-registry: true
-
-      - name: "[GHCR] Generate artifact for cruise-control-ui"
-        if: matrix.image_type == 'cruise-control-ui'
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
-        with:
-          subject-name: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}-ui
-          subject-digest: ${{ steps.push_ui.outputs.digest }}
           push-to-registry: true
 
   update-docs:
@@ -188,16 +133,12 @@ jobs:
           cc_current_tag=$(grep "ARG CC_TAG" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "cc_current_tag=$cc_current_tag" >> $GITHUB_OUTPUT
 
-          cc_ui_current_tag=$(grep "ARG CC_UI_TAG" Dockerfile | cut -d '=' -f 2 | head -1)
-          echo "cc_ui_current_tag=$cc_ui_current_tag" >> $GITHUB_OUTPUT
-
           iam_current_tag=$(grep "ARG AWS_MSK_IAM_AUTH_VERSION" Dockerfile | cut -d '=' -f 2 | head -1)
           echo "iam_current_tag=$iam_current_tag" >> $GITHUB_OUTPUT
 
       - name: "Update README.md default version"
         run: |
           sed -i "s/^- Cruise Control: .*/- Cruise Control: \`${{ steps.current_tag.outputs.cc_current_tag }}\`/" README.md
-          sed -i "s/^- Cruise Control UI: .*/- Cruise Control UI: \`${{ steps.current_tag.outputs.cc_ui_current_tag }}\`/" README.md
           sed -i "s/^- AWS IAM Auth: .*/- AWS IAM Auth: \`${{ steps.current_tag.outputs.iam_current_tag }}\`/" README.md
 
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -212,10 +153,3 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: ${{ env.DOCKERHUB_USER }}/${{ env.DOCKERHUB_REPO_CC }}
-
-      - name: "[DOCKERHUB] Update cruise-control-ui description"
-        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: ${{ env.DOCKERHUB_USER }}/${{ env.DOCKERHUB_REPO_UI }}

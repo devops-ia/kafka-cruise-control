@@ -1,6 +1,5 @@
 # syntax=docker/dockerfile:1
 ARG OPENJDK_VERSION=17
-ARG NGINX_VERSION=1.28-alpine
 
 ###
 # build stage
@@ -8,50 +7,17 @@ ARG NGINX_VERSION=1.28-alpine
 FROM amazoncorretto:${OPENJDK_VERSION} AS build
 
 ARG CC_TAG=3.1.0
-ARG CC_UI_TAG=0.4.0
 ARG AWS_MSK_IAM_AUTH_VERSION=2.3.9
 
 WORKDIR /cruise-control
 
 RUN yum install -y git tar gzip findutils && \
     git clone --depth 1 -b ${CC_TAG} https://github.com/cruise-control-for-kafka/cruise-control.git . && \
-    curl -fsSL -o cruise-control-ui.tar.gz \
-      "https://github.com/linkedin/cruise-control-ui/releases/download/v${CC_UI_TAG}/cruise-control-ui-${CC_UI_TAG}.tar.gz" && \
-    tar xzf cruise-control-ui.tar.gz && \
-    mv cruise-control-ui cruise-control/ && \
-    mkdir -p cruise-control/cruise-control-ui/dist/static && \
-    printf "local,local,/kafkacruisecontrol/\n" > cruise-control/cruise-control-ui/dist/static/config.csv && \
-    rm -f cruise-control-ui.tar.gz && \
     ./gradlew --no-daemon --no-parallel -x test jar copyDependantLibs && \
     curl -fsSL -o cruise-control/build/libs/aws-msk-iam-auth.jar \
       "https://github.com/aws/aws-msk-iam-auth/releases/download/v${AWS_MSK_IAM_AUTH_VERSION}/aws-msk-iam-auth-${AWS_MSK_IAM_AUTH_VERSION}-all.jar" && \
     yum clean all && \
     rm -rf /var/cache/yum /tmp/* /var/tmp/* ~/.gradle/caches/* ~/.gradle/wrapper/* cruise-control/.git
-
-###
-# cruise-control-ui
-###
-FROM nginx:${NGINX_VERSION} AS cruise-control-ui
-
-ARG CC_UI_TAG=0.4.0
-ARG UI_USER=nginx
-ARG UI_UID=101
-ARG UI_GID=101
-
-LABEL maintainer="Iván Alejandro Marugán <hello@ialejandro.rocks>" \
-      org.opencontainers.image.title="Cruise Control UI" \
-      org.opencontainers.image.description="Cruise Control UI with Nginx" \
-      org.opencontainers.image.version="${CC_UI_TAG}"
-
-COPY --from=build --chown=${UI_UID}:${UI_GID} /cruise-control/cruise-control/cruise-control-ui/dist /usr/share/nginx/html
-
-# Non-root nginx needs a writable cache dir and a pid file outside /run
-RUN chown -R ${UI_UID}:${UI_GID} /var/cache/nginx && \
-    sed -i 's#/run/nginx.pid#/tmp/nginx.pid#' /etc/nginx/nginx.conf
-
-USER ${UI_UID}
-
-CMD ["nginx", "-g", "daemon off;"]
 
 ###
 # cruise-control
