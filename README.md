@@ -12,7 +12,7 @@ Optimized multi-stage Docker image for Cruise Control for Apache Kafka. Based on
 Default versions:
 
 - Cruise Control: `3.1.0`
-- AWS IAM Auth: `2.3.9`
+- AWS IAM Auth: `2.4.0`
 - Java (Amazon Corretto): `17`
 
 ## Supported versions and migration from 2.x
